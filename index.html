@@ -109,14 +109,45 @@
     </p>
   </main>
 
-  <script>
-    document.getElementById('registerForm')
-      .addEventListener('submit', function(event) {
-        event.preventDefault();
+  
+<button id="testConnection" type="button">
+  Test Backend Connection
+</button>
+<p id="connectionStatus" role="status"></p>
 
-        document.getElementById('message').textContent =
-          'The form design is ready. Secure backend integration is the next step.';
-      });
-  </script>
+<script>
+const WORKER_URL =
+  "https://attendance-api.chopparapardhu.workers.dev";
+
+document.getElementById("testConnection").addEventListener("click", async () => {
+  const status = document.getElementById("connectionStatus");
+  const button = document.getElementById("testConnection");
+
+  button.disabled = true;
+  status.textContent = "Testing connection...";
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "ping" })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.success !== true) {
+      throw new Error("Connection test was not successful");
+    }
+
+    status.textContent = "Connected successfully to Apps Script!";
+  } catch (error) {
+    status.textContent =
+      "Connection failed. Check Worker deployment and backend settings.";
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+
 </body>
 </html>
