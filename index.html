@@ -110,7 +110,11 @@
   </main>
 
   
-<button id="testConnection" type="button">
+
+<div class="cf-turnstile"
+     data-sitekey="0x4AAAAAAFmks1MxaLVo09-q">
+</div>
+  <button id="testConnection" type="button">
   Test Backend Connection
 </button>
 <p id="connectionStatus" role="status"></p>
@@ -148,6 +152,7 @@ document.getElementById("testConnection").addEventListener("click", async () => 
   }
 });
 </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 </body>
 </html>
