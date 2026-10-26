@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#176b45">
+  <title>Employee Attendance Pro</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f2f5f9;
+      color: #172033;
+      font-family: Arial, sans-serif;
+    }
+
+    .card {
+      max-width: 440px;
+      margin: 25px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 5px 24px #0000000d;
+    }
+
+    h1 { font-size: 25px; margin-bottom: 8px; }
+    .muted { color: #667085; font-size: 14px; line-height: 1.5; }
+
+    label {
+      display: block;
+      margin: 17px 0 7px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input, select, button {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px;
+      border-radius: 9px;
+      font-size: 16px;
+    }
+
+    input, select {
+      border: 1px solid #d0d5dd;
+      background: white;
+    }
+
+    button {
+      margin-top: 20px;
+      border: 0;
+      background: #176b45;
+      color: white;
+      font-weight: bold;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 9px;
+      background: #eef4f0;
+      color: #176b45;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Employee Attendance Pro</h1>
+    <p class="muted">
+      Employee registration and site attendance
+    </p>
+
+    <h2>Register Employee</h2>
+
+    <form id="registerForm">
+      <label for="name">Full Name</label>
+      <input id="name" name="name"
+             autocomplete="name" required maxlength="100">
+
+      <label for="mobile">Mobile Number</label>
+      <input id="mobile" name="mobile" type="tel"
+             inputmode="numeric" pattern="[0-9]{10}"
+             maxlength="10" required>
+
+      <label for="email">Email (optional)</label>
+      <input id="email" name="email" type="email"
+             autocomplete="email" maxlength="150">
+
+      <label for="department">Department</label>
+      <select id="department" name="department" required>
+        <option value="">Select department</option>
+        <option>Construction</option>
+        <option>Purchase</option>
+        <option>Electrical</option>
+        <option>Plumbing</option>
+        <option>Admin</option>
+        <option>Other</option>
+      </select>
+
+      <button type="submit">Register</button>
+    </form>
+
+    <p id="message" class="notice" role="status">
+      Registration form ready. Backend connection is not enabled yet.
+    </p>
+  </main>
+
+  <script>
+    document.getElementById('registerForm')
+      .addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        document.getElementById('message').textContent =
+          'The form design is ready. Secure backend integration is the next step.';
+      });
+  </script>
+</body>
+</html>
