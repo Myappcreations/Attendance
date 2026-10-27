@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#176b45">
   <title>Employee Attendance Pro</title>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -26,7 +30,13 @@
     }
 
     h1 { font-size: 25px; margin-bottom: 8px; }
-    .muted { color: #667085; font-size: 14px; line-height: 1.5; }
+    h2 { font-size: 20px; margin-top: 24px; }
+
+    .muted {
+      color: #667085;
+      font-size: 14px;
+      line-height: 1.5;
+    }
 
     label {
       display: block;
@@ -56,6 +66,10 @@
       font-weight: bold;
     }
 
+    button:disabled {
+      opacity: 0.55;
+    }
+
     .notice {
       margin-top: 18px;
       padding: 12px;
@@ -64,9 +78,17 @@
       color: #176b45;
       font-size: 13px;
       line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    #googleButton {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
     }
   </style>
 </head>
+
 <body>
   <main class="card">
     <h1>Employee Attendance Pro</h1>
@@ -74,21 +96,27 @@
       Employee registration and site attendance
     </p>
 
-    <h2>Register Employee</h2>
+    <h2>1. Google Sign-In</h2>
+    <p class="muted">
+      Sign in with the Google account you want to register.
+    </p>
+
+    <div id="googleButton"></div>
+    <p id="signInStatus" class="notice" role="status">
+      Loading Google Sign-In...
+    </p>
+
+    <h2>2. Register Employee</h2>
 
     <form id="registerForm">
       <label for="name">Full Name</label>
-      <input id="name" name="name"
+      <input id="name" name="fullName"
              autocomplete="name" required maxlength="100">
 
       <label for="mobile">Mobile Number</label>
       <input id="mobile" name="mobile" type="tel"
              inputmode="numeric" pattern="[0-9]{10}"
              maxlength="10" required>
-
-      <label for="email">Email (optional)</label>
-      <input id="email" name="email" type="email"
-             autocomplete="email" maxlength="150">
 
       <label for="department">Department</label>
       <select id="department" name="department" required>
@@ -101,58 +129,97 @@
         <option>Other</option>
       </select>
 
-      <button type="submit">Register</button>
+      <button id="registerButton" type="submit" disabled>
+        Register
+      </button>
     </form>
 
     <p id="message" class="notice" role="status">
-      Registration form ready. Backend connection is not enabled yet.
+      Sign in first. Registration backend is not connected yet.
     </p>
   </main>
 
-  
+  <script>
+    const GOOGLE_CLIENT_ID =
+      "741966424487-uf45m6oqsv7cm227erdskqsds9lngnlr.apps.googleusercontent.com";
 
-<div class="cf-turnstile"
-     data-sitekey="0x4AAAAAAFmks1MxaLVo09-q">
-</div>
-  <button id="testConnection" type="button">
-  Test Backend Connection
-</button>
-<p id="connectionStatus" role="status"></p>
+    let googleIdToken = null;
 
-<script>
-const WORKER_URL =
-  "https://attendance-api.chopparapardhu.workers.dev";
+    const signInStatus = document.getElementById("signInStatus");
+    const registerButton = document.getElementById("registerButton");
+    const message = document.getElementById("message");
 
-document.getElementById("testConnection").addEventListener("click", async () => {
-  const status = document.getElementById("connectionStatus");
-  const button = document.getElementById("testConnection");
+    function handleGoogleSignIn(response) {
+      if (!response || !response.credential) {
+        signInStatus.textContent = "Google Sign-In failed. Please try again.";
+        return;
+      }
 
-  button.disabled = true;
-  status.textContent = "Testing connection...";
+      // Keep the token in memory only. Never save it in a URL,
+      // localStorage, sessionStorage, or console logs.
+      googleIdToken = response.credential;
 
-  try {
-    const response = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "ping" })
-    });
+      signInStatus.textContent =
+        "Google Sign-In completed. Server verification is still required.";
 
-    const result = await response.json();
+      registerButton.disabled = false;
 
-    if (!response.ok || result.success !== true) {
-      throw new Error("Connection test was not successful");
+      message.textContent =
+        "You can complete the form, but registration is not submitted yet.";
     }
 
-    status.textContent = "Connected successfully to Apps Script!";
-  } catch (error) {
-    status.textContent =
-      "Connection failed. Check Worker deployment and backend settings.";
-  } finally {
-    button.disabled = false;
-  }
-});
-</script>
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    function initializeGoogleSignIn() {
+      if (!window.google || !google.accounts || !google.accounts.id) {
+        signInStatus.textContent =
+          "Google Sign-In could not load. Refresh the page and try again.";
+        return;
+      }
 
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleSignIn
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById("googleButton"),
+        {
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular",
+          width: 280
+        }
+      );
+
+      signInStatus.textContent =
+        "Tap the Google button to sign in.";
+    }
+
+    function waitForGoogle() {
+      if (window.google && google.accounts && google.accounts.id) {
+        initializeGoogleSignIn();
+      } else {
+        setTimeout(waitForGoogle, 300);
+      }
+    }
+
+    document.getElementById("registerForm").addEventListener(
+      "submit",
+      function(event) {
+        event.preventDefault();
+
+        if (!googleIdToken) {
+          message.textContent = "Please sign in with Google first.";
+          return;
+        }
+
+        message.textContent =
+          "Not submitted: secure Apps Script registration connection " +
+          "is not enabled yet. Your details have not been sent.";
+      }
+    );
+
+    waitForGoogle();
+  </script>
 </body>
 </html>
