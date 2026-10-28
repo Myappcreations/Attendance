@@ -2,12 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#176b45">
   <title>Employee Attendance Pro</title>
-
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -15,211 +13,242 @@
     body {
       margin: 0;
       padding: 20px;
-      background: #f2f5f9;
+      background: #f1f5f9;
       color: #172033;
       font-family: Arial, sans-serif;
     }
 
     .card {
-      max-width: 440px;
+      max-width: 480px;
       margin: 25px auto;
       padding: 24px;
       background: white;
-      border-radius: 18px;
-      box-shadow: 0 5px 24px #0000000d;
+      border-radius: 16px;
+      box-shadow: 0 5px 24px rgba(0,0,0,.08);
     }
 
-    h1 { font-size: 25px; margin-bottom: 8px; }
-    h2 { font-size: 20px; margin-top: 24px; }
-
-    .muted {
-      color: #667085;
-      font-size: 14px;
-      line-height: 1.5;
-    }
+    h1 { font-size: 24px; margin-top: 0; }
+    h2 { font-size: 19px; margin-top: 24px; }
 
     label {
       display: block;
-      margin: 17px 0 7px;
+      margin: 14px 0 6px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: bold;
     }
 
     input, select, button {
       width: 100%;
-      min-height: 48px;
+      min-height: 46px;
       padding: 12px;
-      border-radius: 9px;
+      border-radius: 8px;
       font-size: 16px;
     }
 
     input, select {
-      border: 1px solid #d0d5dd;
+      border: 1px solid #cbd5e1;
       background: white;
     }
 
     button {
-      margin-top: 20px;
+      margin-top: 16px;
       border: 0;
       background: #176b45;
       color: white;
       font-weight: bold;
+      cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.55;
-    }
+    button:disabled { opacity: .6; }
+
+    .secondary { background: #475569; }
 
     .notice {
-      margin-top: 18px;
+      margin-top: 16px;
       padding: 12px;
-      border-radius: 9px;
-      background: #eef4f0;
-      color: #176b45;
-      font-size: 13px;
-      line-height: 1.5;
+      border-radius: 8px;
+      background: #f1f5f9;
+      white-space: pre-wrap;
       overflow-wrap: anywhere;
+      font-size: 14px;
     }
 
-    #googleButton {
-      margin-top: 16px;
-      display: flex;
-      justify-content: center;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 
 <body>
   <main class="card">
     <h1>Employee Attendance Pro</h1>
-    <p class="muted">
-      Employee registration and site attendance
-    </p>
+    <p>Admin Login and User Creation</p>
 
-    <h2>1. Google Sign-In</h2>
-    <p class="muted">
-      Sign in with the Google account you want to register.
-    </p>
+    <section id="loginSection">
+      <h2>Admin Login</h2>
 
-    <div id="googleButton"></div>
-    <p id="signInStatus" class="notice" role="status">
-      Loading Google Sign-In...
-    </p>
+      <form id="loginForm">
+        <label for="adminUsername">Username</label>
+        <input id="adminUsername" autocomplete="username"
+               required maxlength="30">
 
-    <h2>2. Register Employee</h2>
+        <label for="adminPassword">Password</label>
+        <input id="adminPassword" type="password"
+               autocomplete="current-password" required>
 
-    <form id="registerForm">
-      <label for="name">Full Name</label>
-      <input id="name" name="fullName"
-             autocomplete="name" required maxlength="100">
+        <button id="loginButton" type="submit">Login</button>
+      </form>
+    </section>
 
-      <label for="mobile">Mobile Number</label>
-      <input id="mobile" name="mobile" type="tel"
-             inputmode="numeric" pattern="[0-9]{10}"
-             maxlength="10" required>
+    <section id="dashboard" class="hidden">
+      <h2 id="welcome"></h2>
+      <p>Create a new employee account.</p>
 
-      <label for="department">Department</label>
-      <select id="department" name="department" required>
-        <option value="">Select department</option>
-        <option>Construction</option>
-        <option>Purchase</option>
-        <option>Electrical</option>
-        <option>Plumbing</option>
-        <option>Admin</option>
-        <option>Other</option>
-      </select>
+      <form id="employeeForm">
+        <label for="username">Employee Username</label>
+        <input id="username" autocomplete="off"
+               minlength="4" maxlength="30"
+               pattern="[a-zA-Z0-9._-]+"
+               required>
 
-      <button id="registerButton" type="submit" disabled>
-        Register
+        <label for="fullName">Full Name</label>
+        <input id="fullName" maxlength="100"
+               autocomplete="name" required>
+
+        <label for="department">Department</label>
+        <select id="department" required>
+          <option value="">Select department</option>
+          <option>Construction</option>
+          <option>Civil</option>
+          <option>Purchase</option>
+          <option>Electrical</option>
+          <option>Plumbing</option>
+          <option>Office</option>
+          <option>Other</option>
+        </select>
+
+        <label for="employeePassword">Temporary Password</label>
+        <input id="employeePassword" type="password"
+               minlength="12" maxlength="128"
+               autocomplete="new-password" required>
+
+        <button id="createButton" type="submit">
+          Create User
+        </button>
+      </form>
+
+      <button id="logoutButton" class="secondary" type="button">
+        Logout
       </button>
-    </form>
+    </section>
 
-    <p id="message" class="notice" role="status">
-      Sign in first. Registration backend is not connected yet.
-    </p>
+    <div id="message" class="notice" role="status" aria-live="polite">
+      Enter your Admin credentials.
+    </div>
   </main>
 
   <script>
-    const GOOGLE_CLIENT_ID =
-      "741966424487-uf45m6oqsv7cm227erdskqsds9lngnlr.apps.googleusercontent.com";
+    let adminToken = null;
 
-    let googleIdToken = null;
+    const loginSection = document.getElementById('loginSection');
+    const dashboard = document.getElementById('dashboard');
+    const message = document.getElementById('message');
 
-    const signInStatus = document.getElementById("signInStatus");
-    const registerButton = document.getElementById("registerButton");
-    const message = document.getElementById("message");
-
-    function handleGoogleSignIn(response) {
-      if (!response || !response.credential) {
-        signInStatus.textContent = "Google Sign-In failed. Please try again.";
-        return;
-      }
-
-      // Keep the token in memory only. Never save it in a URL,
-      // localStorage, sessionStorage, or console logs.
-      googleIdToken = response.credential;
-
-      signInStatus.textContent =
-        "Google Sign-In completed. Server verification is still required.";
-
-      registerButton.disabled = false;
-
-      message.textContent =
-        "You can complete the form, but registration is not submitted yet.";
+    function showMessage(text) {
+      message.textContent = text;
     }
 
-    function initializeGoogleSignIn() {
-      if (!window.google || !google.accounts || !google.accounts.id) {
-        signInStatus.textContent =
-          "Google Sign-In could not load. Refresh the page and try again.";
-        return;
-      }
-
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleSignIn
-      });
-
-      google.accounts.id.renderButton(
-        document.getElementById("googleButton"),
-        {
-          theme: "outline",
-          size: "large",
-          text: "signin_with",
-          shape: "rectangular",
-          width: 280
-        }
-      );
-
-      signInStatus.textContent =
-        "Tap the Google button to sign in.";
-    }
-
-    function waitForGoogle() {
-      if (window.google && google.accounts && google.accounts.id) {
-        initializeGoogleSignIn();
-      } else {
-        setTimeout(waitForGoogle, 300);
-      }
-    }
-
-    document.getElementById("registerForm").addEventListener(
-      "submit",
-      function(event) {
+    document.getElementById('loginForm').addEventListener(
+      'submit', function(event) {
         event.preventDefault();
 
-        if (!googleIdToken) {
-          message.textContent = "Please sign in with Google first.";
-          return;
-        }
+        const button = document.getElementById('loginButton');
+        button.disabled = true;
+        showMessage('Checking login...');
 
-        message.textContent =
-          "Not submitted: secure Apps Script registration connection " +
-          "is not enabled yet. Your details have not been sent.";
+        google.script.run
+          .withSuccessHandler(function(result) {
+            button.disabled = false;
+
+            if (!result || !result.success || !result.token) {
+              showMessage('Login failed. Please try again.');
+              return;
+            }
+
+            adminToken = result.token;
+            loginSection.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+
+            document.getElementById('welcome').textContent =
+              'Welcome, ' + result.fullName;
+
+            document.getElementById('adminPassword').value = '';
+            showMessage('Login successful.');
+          })
+          .withFailureHandler(function(error) {
+            button.disabled = false;
+            showMessage(error && error.message
+              ? error.message : 'Login failed.');
+          })
+          .loginAdmin(
+            document.getElementById('adminUsername').value.trim(),
+            document.getElementById('adminPassword').value
+          );
       }
     );
 
-    waitForGoogle();
+    document.getElementById('employeeForm').addEventListener(
+      'submit', function(event) {
+        event.preventDefault();
+
+        if (!adminToken) {
+          showMessage('Please log in again.');
+          return;
+        }
+
+        const button = document.getElementById('createButton');
+        button.disabled = true;
+        showMessage('Creating employee account...');
+
+        const data = {
+          username: document.getElementById('username').value.trim(),
+          fullName: document.getElementById('fullName').value.trim(),
+          department: document.getElementById('department').value,
+          password: document.getElementById('employeePassword').value
+        };
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            button.disabled = false;
+
+            if (result && result.success) {
+              document.getElementById('employeeForm').reset();
+              showMessage(result.message);
+            } else {
+              showMessage('Could not create the user.');
+            }
+          })
+          .withFailureHandler(function(error) {
+            button.disabled = false;
+            showMessage(error && error.message
+              ? error.message : 'Could not create the user.');
+          })
+          .createEmployee(adminToken, data);
+      }
+    );
+
+    document.getElementById('logoutButton').addEventListener(
+      'click', function() {
+        const token = adminToken;
+        adminToken = null;
+
+        dashboard.classList.add('hidden');
+        loginSection.classList.remove('hidden');
+        document.getElementById('employeeForm').reset();
+        document.getElementById('loginForm').reset();
+
+        google.script.run.logoutAdmin(token);
+        showMessage('You have logged out.');
+      }
+    );
   </script>
 </body>
 </html>
