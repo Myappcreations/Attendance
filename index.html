@@ -1,18 +1,229 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Employee Attendance Pro</title>
-  <meta http-equiv="refresh" content="0;url=https://script.google.com/macros/s/AKfycbx-R-4kr6_Y4OQTitN6jvMuqDeeYcF9YK0q-DvnN5rA8YVQ--neHbMAYMgP29qqyDs29Q/exec">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee Attendance Pro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;font-family:Arial,sans-serif;background:#f1f5f9;color:#172033}
+main{max-width:600px;margin:auto}
+.card{background:white;padding:20px;border-radius:16px;margin:14px 0;box-shadow:0 3px 12px #0000000b}
+h1{font-size:25px}h2{font-size:20px}
+input{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
+label{font-weight:bold;font-size:14px}
+button{width:100%;padding:13px;border:0;border-radius:9px;background:#1d4ed8;color:white;font-size:16px;font-weight:bold;margin:6px 0;cursor:pointer}
+.secondary{background:#e2e8f0;color:#172033}
+.msg{padding:12px;margin-top:10px;border-radius:8px;background:#eff6ff;white-space:pre-wrap;overflow-wrap:anywhere}
+.hidden{display:none!important}
+.item{background:#f8fafc;padding:12px;margin:8px 0;border-radius:8px;font-size:14px}
+small{color:#64748b}
+</style>
 </head>
 <body>
-  <p>Opening Employee Attendance Pro...</p>
-  <p>
-    <a href="https://script.google.com/macros/s/AKfycbx-R-4kr6_Y4OQTitN6jvMuqDeeYcF9YK0q-DvnN5rA8YVQ--neHbMAYMgP29qqyDs29Q/exec">
-      Open Admin Login
-    </a>
-  </p>
+<main>
+<h1>Employee Attendance Pro</h1>
+<p><small>Site-based attendance · 100m GPS verification</small></p>
+
+<section class="card" id="loginPanel">
+<h2>Login</h2>
+<label>Mobile Number</label>
+<input id="mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile">
+<label>Password</label>
+<input id="password" type="password" placeholder="Enter password">
+<button id="loginBtn">Login</button>
+<div id="loginMsg" class="msg hidden"></div>
+</section>
+
+<section class="card hidden" id="appPanel">
+<h2 id="welcome">Welcome</h2>
+<p id="role"></p>
+<button class="secondary" id="logoutBtn">Logout</button>
+
+<div id="employeePanel" class="hidden">
+<h2>Mark Attendance</h2>
+<p>మీరు registered siteకి 100 మీటర్ల లోపల ఉండాలి. Phone Location ON చేయండి.</p>
+<button id="presentBtn">Get Location & Mark Present</button>
+<div id="attendanceMsg" class="msg hidden"></div>
+<h3>Registered Sites</h3>
+<div id="sites"></div>
+</div>
+
+<div id="adminPanel" class="hidden">
+<h2>Create Employee</h2>
+<label>Employee Name</label>
+<input id="empName" placeholder="Employee full name">
+<label>Mobile Number</label>
+<input id="empMobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile">
+<label>Initial Password (minimum 12 characters)</label>
+<input id="empPassword" type="password" placeholder="Set password">
+<button id="createEmployeeBtn">Create Employee</button>
+<div id="employeeMsg" class="msg hidden"></div>
+
+<hr>
+<h2>Register Site</h2>
+<label>Site Name</label>
+<input id="siteName" placeholder="Project/site name">
+<label>Latitude</label>
+<input id="siteLat" type="number" step="any" placeholder="17.000000">
+<label>Longitude</label>
+<input id="siteLng" type="number" step="any" placeholder="78.000000">
+<button id="createSiteBtn">Register Site (100m)</button>
+<div id="siteMsg" class="msg hidden"></div>
+
+<h2>Recent Attendance</h2>
+<button class="secondary" id="refreshBtn">Refresh Records</button>
+<div id="records"></div>
+</div>
+</section>
+</main>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbx-R-4kr6_Y4OQTitN6jvMuqDeeYcF9YK0q-DvnN5rA8YVQ--neHbMAYMgP29qqyDs29Q/exec';
+
+let session = null;
+const $ = id => document.getElementById(id);
+
+function message(id, text, ok=false) {
+  const el=$(id);
+  el.textContent=text;
+  el.classList.remove('hidden');
+  el.style.background=ok?'#dcfce7':'#fee2e2';
+}
+function hide(id){$(id).classList.add('hidden');}
+function show(id){$(id).classList.remove('hidden');}
+
+async function api(action, data={}) {
+  const response=await fetch(API_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action,...data})
+  });
+  const result=await response.json();
+  if(!result.ok) throw new Error(result.error||'Request failed');
+  return result.data;
+}
+
+$('loginBtn').onclick=async()=>{
+  hide('loginMsg');
+  $('loginBtn').disabled=true;
+  try{
+    const r=await api('login',{
+      mobile:$('mobile').value.trim(),
+      password:$('password').value
+    });
+    session=r;
+    hide('loginPanel');show('appPanel');
+    $('welcome').textContent='Welcome, '+r.name;
+    $('role').textContent=r.role==='admin'?'Administrator':'Employee';
+
+    if(r.role==='admin'){
+      show('adminPanel');hide('employeePanel');
+      loadRecords();
+    }else{
+      show('employeePanel');hide('adminPanel');
+      loadSites();
+    }
+  }catch(e){message('loginMsg',e.message);}
+  finally{$('loginBtn').disabled=false;}
+};
+
+$('logoutBtn').onclick=()=>{
+  session=null;
+  $('password').value='';
+  hide('appPanel');show('loginPanel');
+};
+
+async function loadSites(){
+  try{
+    const data=await api('listSites',{token:session.token});
+    $('sites').replaceChildren();
+    if(!data.length){$('sites').textContent='No sites registered.';return;}
+    data.forEach(s=>{
+      const d=document.createElement('div');
+      d.className='item';
+      d.textContent=s.siteName+' — '+s.radiusMeters+'m radius';
+      $('sites').appendChild(d);
+    });
+  }catch(e){message('attendanceMsg',e.message);}
+}
+
+$('presentBtn').onclick=()=>{
+  if(!navigator.geolocation){
+    message('attendanceMsg','GPS not supported by this browser.');
+    return;
+  }
+  $('presentBtn').disabled=true;
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{
+      const r=await api('markPresent',{
+        token:session.token,
+        latitude:pos.coords.latitude,
+        longitude:pos.coords.longitude,
+        accuracy:pos.coords.accuracy
+      });
+      message('attendanceMsg',
+        'PRESENT SUCCESSFULLY!\nSite: '+r.siteName+
+        '\nDate: '+r.date+'\nTime: '+r.time+
+        '\nDistance: '+r.distanceMeters+'m',true);
+    }catch(e){message('attendanceMsg',e.message);}
+    finally{$('presentBtn').disabled=false;}
+  },err=>{
+    message('attendanceMsg','GPS error: '+err.message+
+      '. Allow location permission and enable precise location.');
+    $('presentBtn').disabled=false;
+  },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+};
+
+$('createEmployeeBtn').onclick=async()=>{
+  $('createEmployeeBtn').disabled=true;
+  try{
+    const r=await api('adminCreateEmployee',{
+      token:session.token,
+      name:$('empName').value.trim(),
+      mobile:$('empMobile').value.trim(),
+      password:$('empPassword').value
+    });
+    message('employeeMsg','Employee created: '+r.name+' ('+r.mobile+')',true);
+    $('empName').value='';
+    $('empMobile').value='';
+    $('empPassword').value='';
+  }catch(e){message('employeeMsg',e.message);}
+  finally{$('createEmployeeBtn').disabled=false;}
+};
+
+$('createSiteBtn').onclick=async()=>{
+  $('createSiteBtn').disabled=true;
+  try{
+    const r=await api('adminCreateSite',{
+      token:session.token,
+      siteName:$('siteName').value.trim(),
+      latitude:$('siteLat').value,
+      longitude:$('siteLng').value,
+      radiusMeters:100
+    });
+    message('siteMsg','Site registered: '+r.siteName,true);
+    $('siteName').value='';
+    loadRecords();
+  }catch(e){message('siteMsg',e.message);}
+  finally{$('createSiteBtn').disabled=false;}
+};
+
+async function loadRecords(){
+  try{
+    const data=await api('adminAttendance',{token:session.token});
+    $('records').replaceChildren();
+    if(!data.length){$('records').textContent='No records yet.';return;}
+    data.forEach(r=>{
+      const d=document.createElement('div');
+      d.className='item';
+      d.textContent=r.employeeName+' | '+r.date+' '+r.time+
+        ' | '+r.siteName+' | '+r.distanceMeters+'m';
+      $('records').appendChild(d);
+    });
+  }catch(e){message('employeeMsg',e.message);}
+}
+$('refreshBtn').onclick=loadRecords;
+</script>
 </body>
 </html>
